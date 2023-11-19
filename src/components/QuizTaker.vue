@@ -24,9 +24,10 @@ const nextCard = () => {
   show.value = false;
 
   // Reset the currentGuess for the next card
-  if(state.curCardIndex < state.quiz.length && state.quiz[state.curCardIndex].quizCards.answerType === 'multiple'){
+  if(state.curCardIndex < state.quiz.length && state.quiz[state.curCardIndex].answerType === 'multiple'){
     // map state all to false
     currentGuess.selected = state.quiz[state.curCardIndex].answers.map( a => false);
+    console.log(currentGuess.selected)
   }else{
     currentGuess.selected = [];
   }
@@ -39,7 +40,7 @@ onMounted(() => {
   state.quiz = JSON.parse(quizJson);
 
   // map state all to false
-    currentGuess.selected = state.quiz[state.curCardIndex].answers.map( a => false);
+ currentGuess.selected = state.quiz[state.curCardIndex].answers.map( a => false);
 });
 </script>
 
