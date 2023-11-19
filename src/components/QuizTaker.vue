@@ -4,36 +4,15 @@ import { ref, reactive, onMounted } from 'vue';
 const state = reactive({ quiz: null, curCardIndex: 0 });
 const show = ref(false);
 
-const correctGuess = ref(false);
-
 const currentGuess = reactive({ selected: [] });
 
-const logMultipleAnswer = (answer) => {
-  console.log(answer)
-  if(currentGuess.selected.includes(answer)){
-    currentGuess.selected = currentGuess.selected.filter(g => g.answer === answer);
-  }else{
-    currentGuess.selected.push(answer);
-  }
+// toggles the selected answer value
+const logMultipleAnswer = (answerIndex: number) => {
+  currentGuess.selected[answerIndex] = !currentGuess.selected[answerIndex];
   
 };
 
 const checkMultipleAnswer = () => {
-
-  let isIncorrect = false;
-  for(const selectedAnswer of currentGuess.selected){
-    console.log(selectedAnswer)
-    if(state.quiz[state.curCardIndex].answers.filter(a => a.isAnswer).find(a => a.answer === selectedAnswer) === undefined){
-        correctGuess.value = false;
-        show.value = true;
-        isIncorrect = true;
-        
-    }
-  }
-  if(isIncorrect){
-    return;
-  }
-  correctGuess.value = (currentGuess.selected.length === state.quiz[state.curCardIndex].answers.filter(a => a.isAnswer).length);
   show.value = true;
 };
 
@@ -45,13 +24,22 @@ const nextCard = () => {
   show.value = false;
 
   // Reset the currentGuess for the next card
-  currentGuess.selected = [];
+  if(state.curCardIndex < state.quiz.length && state.quiz[state.curCardIndex].quizCards.answerType === 'multiple'){
+    // map state all to false
+    currentGuess.selected = state.quiz[state.curCardIndex].answers.map( a => false);
+  }else{
+    currentGuess.selected = [];
+  }
+  
 };
 
 // TODO: remove this when backend is implemented
 onMounted(() => {
   const quizJson = localStorage.getItem('quiz');
   state.quiz = JSON.parse(quizJson);
+
+  // map state all to false
+    currentGuess.selected = state.quiz[state.curCardIndex].answers.map( a => false);
 });
 </script>
 
@@ -59,29 +47,27 @@ onMounted(() => {
   <div v-if="state.quiz">
     <article :key="state.curCardIndex">
       <h4>{{ state.quiz[state.curCardIndex].question }}</h4>
+      <!-- BASIC SHOW ANSWER -->
       <p v-if="state.quiz[state.curCardIndex].answerType === 'basic'">
         {{ state.quiz[state.curCardIndex].answer }}
       </p>
+      <!-- MULTIPLE SELECT -->
       <div v-else>
-        <div v-for="(answer) in state.quiz[state.curCardIndex].answers" :key="answer.answer">
-          <p>{{ answer.answer }}</p>
-          <input type="checkbox" @click="logMultipleAnswer(answer.answer)" />
+        <div v-for="(answer, index) in state.quiz[state.curCardIndex].answers" :key="answer.answer">
+            <div class="guess-row">
+                <input type="checkbox" @click="logMultipleAnswer(index)" />
+                <p 
+                        :class="{ 
+                        correct: show && (state.quiz[state.curCardIndex].answers[index].isAnswer),
+                        incorrect: show && !(state.quiz[state.curCardIndex].answers[index].isAnswer)
+                        }"
+                    >{{ answer.answer }}</p>
+                <p v-if="show">
+                    {{ currentGuess.selected[index] === state.quiz[state.curCardIndex].answers[index].isAnswer ? '1/1' : '0/1'}}
+                </p>
+            </div>
         </div>
         <button @click="checkMultipleAnswer" v-if="!show">Check Answer</button>
-        <div v-if="show">
-            <h3 v-if="correctGuess">
-                Nice job! You got that correct!
-            </h3>
-            <h3 v-else>
-                Oops...
-                Correct answer(s) was:
-                <ul>
-                    <li v-for="(answer) in state.quiz[state.curCardIndex].answers.filter(a => a.isAnswer)" :key="answer">
-                        {{ answer.answer }}
-                    </li>
-                </ul>
-            </h3>
-        </div>
       </div>
     </article>
     <button @click="nextCard" v-if="state.curCardIndex < state.quiz.length -1 && (show || state.quiz[state.curCardIndex].answerType === 'basic')">Next</button>
@@ -89,6 +75,15 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Add your styles here */
+
+.correct {
+  color: green;
+  font-weight: bold;
+}
+
+.incorrect {
+  color: red;
+  text-decoration: line-through;
+}
 </style>
 
