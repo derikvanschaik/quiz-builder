@@ -89,7 +89,9 @@ const disableCreateButton =() =>{
 const submitQuiz = () => {
   // Implement logic to submit the quiz data
   state.step = 3;
-  console.log(state.quizCards)
+
+  // TODO: CREATE BACKEND 
+  localStorage.setItem("quiz", JSON.stringify(state.quizCards) );
 
 };
 </script>
