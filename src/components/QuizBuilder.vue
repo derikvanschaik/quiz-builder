@@ -16,6 +16,18 @@ const state = reactive({
   quizCards: [],
 });
 
+const initState = () =>{
+  state.newQuestion = '';
+  state.newAnswer = '';
+  state.additional = [];
+  state.isAnswer = false;
+  state.title = '';
+  state.step = 1;
+  state.cardIndex = 0;
+  state.answerType = 'basic';
+  state.quizCards = [];
+}
+
 // Methods
 const nextStep = () => {
   state.step = 2;
@@ -29,8 +41,11 @@ const addCard = () => {
   if(state.answerType === 'basic'){
     state.quizCards.push({ question: state.newQuestion, answer: state.newAnswer, answerType: 'basic'});
   }else{
-      state.quizCards.push({ question: state.newQuestion, answers: state.additional, answerType: 'multiple'});
+    state.quizCards.push({ question: state.newQuestion, answers: state.additional, answerType: 'multiple'});
   }
+
+  console.log(state.quizCards)
+
   state.cardIndex = state.quizCards.length;
   state.newAnswer = '';
   state.newQuestion = '';
@@ -74,6 +89,7 @@ const disableCreateButton =() =>{
 const submitQuiz = () => {
   // Implement logic to submit the quiz data
   state.step = 3;
+  console.log(state.quizCards)
 
 };
 </script>
@@ -86,27 +102,50 @@ const submitQuiz = () => {
     <div v-if="state.step === 1">
       <!-- Step 1: Create Title of Quiz -->
       <h3>Step 1: Quiz Topic</h3>
-      <input v-model="title" placeholder="Enter quiz title" />
+      <input v-model="state.title" placeholder="Enter quiz title" />
       <button @click="nextStep" class="contrast outline">Next</button>
     </div>
     <div v-else-if="state.step === 2">
       <!-- Step 2: Create Quiz Card -->
       <div class="quiz-header">
-        <h3 class="quiz-header-title">Step 2: Create Quiz Cards | <span class="progress-chip">Question [{{state.cardIndex + 1}}]/{{state.quizCards.length}}</span> </h3>
+        <h3 class="quiz-header-title">Step 2: Create Quiz Cards
+          <span class="progress-chip" v-if="state.cardIndex < state.quizCards.length"> Question [{{state.cardIndex + 1}}]/{{state.quizCards.length}}</span> 
+          <span class="progress-chip" v-else>New Question</span> 
+        </h3>
         <button @click="addCard" class="create-card contrast outline" :disabled="disableCreateButton()" >Create New Card</button>
       </div>
 
       <!-- CARD THAT ALREADY EXISTS IN DECK -->
       <div class="quiz-card" v-if="state.cardIndex < state.quizCards.length">
-        <label>Question:</label>
-        <input 
-          v-model="state.quizCards[state.cardIndex].question" 
-          placeholder="Enter question" />
-        
-        <label>Answer:</label>
-        <input 
-          v-model="state.quizCards[state.cardIndex].answer" 
-          placeholder="Enter answer" />
+        <!-- basic answer -->
+        <div v-if="state.quizCards[state.cardIndex].answerType === 'basic' ">
+          <label>Question:</label>
+          <input 
+            v-model="state.quizCards[state.cardIndex].question"
+            placeholder="Enter question" />
+          
+          <label>Answer:</label>
+          <input 
+            v-model="state.quizCards[state.cardIndex].answer" 
+            placeholder="Enter answer" />
+        </div>
+
+        <!-- multiple answer (multiple select or choice) -->
+        <div v-else>
+          <label>Question:</label>
+          <input 
+            v-model="state.quizCards[state.cardIndex].question"
+            placeholder="Enter question" />
+          
+          <label>Answers:</label>
+          <div v-for="(answer, index) in state.quizCards[state.cardIndex].answers" :key="answer" class="multiple-select-answer">
+            <input type="checkbox" v-model="state.quizCards[state.cardIndex].answers[index].isAnswer" />
+            <input v-model="state.quizCards[state.cardIndex].answers[index].answer" />
+          </div>
+          
+
+
+        </div>
       </div>
 
       <!-- NEW CARD -->
@@ -155,19 +194,14 @@ const submitQuiz = () => {
       <div class="actions">
         <button :disabled="state.cardIndex <= 0" @click="prevCard" class="action-button contrast outline">Previous Question</button>
         <button :disabled="state.cardIndex >= state.quizCards.length" @click="nextCard" class="action-button contrast outline">Next Question</button>
-        <button @click="submitQuiz" class="action-button contrast outline" :disabled="state.quizCards.length === 0">Submit Quiz</button>
+        <button @click="submitQuiz()" class="action-button contrast outline" :disabled="state.quizCards.length === 0">Submit Quiz</button>
       </div>
     </div>
 
     <!-- Created cards! -->
     <div v-else>
       <h4>Congrats on building your quiz!</h4>
-      <div v-for="quiz in state.quizCards" :key="quiz.question">
-        <article>
-          <h6>{{ quiz.question}}</h6>
-          <p>{{quiz.answer}}</p>
-        </article>
-      </div>
+      <button @click="initState()">Build Another Quiz</button>
     </div>
   </div>
 </template>
@@ -212,14 +246,4 @@ const submitQuiz = () => {
   display: flex;
   align-items: start;
 }
-/* .checkbox-container{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 50%;
-}
-.select-label{
-  font-size: large;
-  margin-right: 10px;
-} */
 </style>
